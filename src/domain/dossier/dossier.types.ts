@@ -55,3 +55,34 @@ export interface AnalysisEvaluation {
     status: Extract<DossierStatus, "READY" | "NEEDS_REVIEW">;
     warnings: string[];
 }
+export interface UpdateAnalysisInput {
+    requestType: RequestType;
+    requestedAmount: number | null;
+    annualRevenue: number | null;
+    companyAgeYears: number | null;
+    urgency: Urgency | null;
+    summary: string;
+    missingFields: string[];
+    confidence: number;
+}
+
+export type DossierNotFoundResult = {
+    ok: false;
+    error: "NOT_FOUND";
+};
+
+export type DossierValidationResult = {
+    ok: false;
+    error: "VALIDATION_ERROR";
+    issues: string[];
+};
+
+export type DossierSuccessResult<T> = {
+    ok: true;
+    data: T;
+};
+
+export type DossierResult<T> =
+    | DossierSuccessResult<T>
+    | DossierNotFoundResult
+    | DossierValidationResult;

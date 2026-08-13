@@ -18,3 +18,8 @@ export const extractedAnalysisSchema: z.ZodType<ExtractedAnalysis> = z
         confidence: z.number().finite().min(0).max(1),
     })
     .strict();
+export const persistableAnalysisSchema = extractedAnalysisSchema.extend({
+    requestedAmount: z.number().finite().positive().nullable(),
+    annualRevenue: z.number().finite().nonnegative().nullable(),
+    companyAgeYears: z.number().int().finite().nonnegative().nullable(),
+});
