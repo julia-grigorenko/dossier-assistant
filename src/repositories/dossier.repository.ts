@@ -62,11 +62,17 @@ export const dossierRepository = {
         return data ? mapDossierRow(data as DossierRow) : null;
     },
 
-    async findAll(): Promise<Dossier[]> {
-        const { data, error } = await supabaseAdmin
+    async findAll(status?: DossierStatus): Promise<Dossier[]> {
+        let query = supabaseAdmin
             .from(TABLE)
             .select("*")
             .order("created_at", { ascending: false });
+
+        if (status) {
+            query = query.eq("status", status);
+        }
+
+        const { data, error } = await query;
 
         if (error) {
             throw new Error(`Failed to list dossiers: ${error.message}`);

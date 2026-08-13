@@ -3,11 +3,9 @@ import "server-only";
 import { persistableAnalysisSchema } from "@/domain/dossier/analysis.schema";
 import { createDossierSchema } from "@/domain/dossier/dossier.schemas";
 import type {
-    CreateDossierInput,
     Dossier,
     DossierResult,
     DossierStatus,
-    ExtractedAnalysis,
 } from "@/domain/dossier/dossier.types";
 import { evaluateAnalysis } from "@/domain/dossier/evaluate-analysis";
 import { canTransitionStatus } from "@/domain/dossier/status-transitions";
@@ -48,8 +46,8 @@ export const dossierService = {
             : { ok: false, error: "NOT_FOUND" };
     },
 
-    async findAll(): Promise<Dossier[]> {
-        return dossierRepository.findAll();
+    async findAll(status?: DossierStatus): Promise<Dossier[]> {
+        return dossierRepository.findAll(status);
     },
 
     async updateAnalysis(

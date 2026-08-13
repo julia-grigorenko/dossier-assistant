@@ -1,5 +1,7 @@
 import { z } from "zod";
+import { DOSSIER_STATUSES } from "./dossier.types";
 
+export const dossierStatusSchema = z.enum(DOSSIER_STATUSES);
 export const createDossierSchema = z
     .object({
         fullName: z.string().trim().min(1).max(200),

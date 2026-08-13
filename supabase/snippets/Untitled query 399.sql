@@ -1,12 +1,12 @@
-insert into public.dossiers (
+select
+  id,
   full_name,
   email,
-  company_name,
-  original_request
-)
-values (
-  'Test User',
-  'test@example.com',
-  'Test Company',
-  'Test request'
-);
+  status,
+  request_type,
+  requested_amount,
+  confidence,
+  approved_at
+from public.dossiers
+where full_name = 'Integration Test'
+order by created_at desc;
