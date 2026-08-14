@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DossierReviewForm } from "@/components/dossier-review-form";
 import { z } from "zod";
 const dossierIdSchema = z.string().uuid();
 
@@ -28,6 +29,7 @@ const currencyFormatter = new Intl.NumberFormat("en-GB", {
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: "Europe/Amsterdam",
 });
 
 function formatRequestType(value: RequestType): string {
@@ -245,6 +247,9 @@ export default async function DossierPage({
                         </p>
                     </section>
                 )}
+            </div>
+            <div className="mt-6">
+                <DossierReviewForm dossier={dossier} />
             </div>
         </main>
     );

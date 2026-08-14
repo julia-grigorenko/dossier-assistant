@@ -17,6 +17,7 @@ const currencyFormatter = new Intl.NumberFormat("en-GB", {
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: "Europe/Amsterdam",
 });
 
 function formatRequestType(

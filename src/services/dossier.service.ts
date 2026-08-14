@@ -54,21 +54,32 @@ export const dossierService = {
         id: string,
         input: unknown,
     ): Promise<DossierResult<Dossier>> {
+        // 1. Retrieve the current dossier.
         const dossier = await dossierRepository.findById(id);
 
         if (!dossier) {
-            return { ok: false, error: "NOT_FOUND" };
+            return {
+                ok: false,
+                error: "NOT_FOUND",
+            };
         }
 
+        // 2. Approved dossiers are immutable.
         if (dossier.status === "APPROVED") {
             return {
                 ok: false,
                 error: "VALIDATION_ERROR",
-                issues: ["An approved dossier cannot be modified."],
+                issues: [
+                    "An approved dossier cannot be modified.",
+                ],
             };
         }
 
-        const parsed = persistableAnalysisSchema.safeParse(input);
+        // 3. Validate the corrected analysis.
+        // Because the schema is strict, customer fields such as
+        // fullName and email are rejected.
+        const parsed =
+            persistableAnalysisSchema.safeParse(input);
 
         if (!parsed.success) {
             return {
@@ -78,6 +89,7 @@ export const dossierService = {
             };
         }
 
+        // 4. Recalculate warnings and READY/NEEDS_REVIEW.
         const evaluation = evaluateAnalysis(parsed.data);
 
         if (!evaluation.analysis) {
@@ -88,8 +100,12 @@ export const dossierService = {
             };
         }
 
+        // 5. Ensure the calculated status transition is allowed.
         if (
-            !canTransitionStatus(dossier.status, evaluation.status)
+            !canTransitionStatus(
+                dossier.status,
+                evaluation.status,
+            )
         ) {
             return {
                 ok: false,
@@ -100,16 +116,28 @@ export const dossierService = {
             };
         }
 
-        const updated = await dossierRepository.updateAnalysis(
-            id,
-            evaluation.analysis,
-            evaluation.status,
-            evaluation.warnings,
-        );
+        // 6. Persist the validated analysis, calculated status,
+        // and calculated warnings.
+        const updated =
+            await dossierRepository.updateAnalysis(
+                id,
+                evaluation.analysis,
+                evaluation.status,
+                evaluation.warnings,
+            );
 
         return updated
-            ? { ok: true, data: updated }
-            : { ok: false, error: "NOT_FOUND" };
+            ? {
+                ok: true,
+                data: updated,
+            }
+            : {
+                ok: false,
+                error: "VALIDATION_ERROR",
+                issues: [
+                    "The dossier changed before the corrections were saved. Refresh and try again.",
+                ],
+            };
     },
 
     async updateStatus(
@@ -144,13 +172,20 @@ export const dossierService = {
             : { ok: false, error: "NOT_FOUND" };
     },
 
-    async approve(id: string): Promise<DossierResult<Dossier>> {
+    async approve(
+        id: string,
+    ): Promise<DossierResult<Dossier>> {
+        // 1. Retrieve the dossier.
         const dossier = await dossierRepository.findById(id);
 
         if (!dossier) {
-            return { ok: false, error: "NOT_FOUND" };
+            return {
+                ok: false,
+                error: "NOT_FOUND",
+            };
         }
 
+        // 2. Approval is allowed only after analysis.
         if (
             dossier.status !== "READY" &&
             dossier.status !== "NEEDS_REVIEW"
@@ -164,32 +199,48 @@ export const dossierService = {
             };
         }
 
+        // 3. A dossier cannot be approved without analysis.
         if (!dossier.analysis) {
             return {
                 ok: false,
                 error: "VALIDATION_ERROR",
-                issues: ["A dossier must contain validated analysis."],
+                issues: [
+                    "A dossier must contain validated analysis before approval.",
+                ],
             };
         }
 
-        const parsedAnalysis =
+        // 4. Stored analysis must pass hard validation.
+        const parsed =
             persistableAnalysisSchema.safeParse(dossier.analysis);
 
-        if (!parsedAnalysis.success) {
+        if (!parsed.success) {
             return {
                 ok: false,
                 error: "VALIDATION_ERROR",
-                issues: validationIssues(parsedAnalysis.error),
+                issues: validationIssues(parsed.error),
             };
         }
 
+        // 5. Persist APPROVED and approved_at together.
         const approved = await dossierRepository.approve(
             id,
             dossier.status,
         );
 
+        // A null result here normally means another request changed
+        // the dossier after it was retrieved.
         return approved
-            ? { ok: true, data: approved }
-            : { ok: false, error: "NOT_FOUND" };
+            ? {
+                ok: true,
+                data: approved,
+            }
+            : {
+                ok: false,
+                error: "VALIDATION_ERROR",
+                issues: [
+                    "The dossier changed before approval. Refresh and try again.",
+                ],
+            };
     },
 };
