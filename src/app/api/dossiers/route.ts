@@ -15,10 +15,6 @@ interface DossierListResponse {
     data: Dossier[];
 }
 
-interface DossierResponse {
-    data: Dossier;
-}
-
 function toFields(
     issues: string[],
 ): Record<string, string[]> {
