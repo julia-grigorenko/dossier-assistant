@@ -17,6 +17,9 @@
 .env.test.local
 .env.production.local
 
+# n8n secrets
+/n8n/.env
+
 # keep environment documentation
 !.env.example
 

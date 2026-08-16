@@ -5,6 +5,7 @@ export type ApiErrorCode =
     | "VALIDATION_ERROR"
     | "NOT_FOUND"
     | "INVALID_STATE"
+    | "UNAUTHORIZED"
     | "INTERNAL_ERROR";
 
 export interface ApiErrorBody {

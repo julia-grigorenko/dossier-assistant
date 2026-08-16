@@ -93,7 +93,7 @@ For local Supabase development, add:
 
 ```dotenv
 SUPABASE_URL=http://127.0.0.1:54321
-SUPABASE_SECRET_KEY=YOUR_LOCAL_SERVICE_ROLE_KEY
+SUPABASE_SERVICE_ROLE_KEY=YOUR_LOCAL_SERVICE_ROLE_KEY
 ```
 
 Use the API URL and `service_role` key printed by:
@@ -120,7 +120,7 @@ For a hosted Supabase project, use:
 
 ```dotenv
 SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
-SUPABASE_SECRET_KEY=YOUR_HOSTED_SUPABASE_SECRET_KEY
+SUPABASE_SERVICE_ROLE_KEY=YOUR_HOSTED_SUPABASE_SECRET_KEY
 ```
 
 The URL and key must belong to the same Supabase instance. Do not combine a local URL with a hosted key.
@@ -155,7 +155,7 @@ The committed `.env.example` documents required variables without containing rea
 
 ```dotenv
 SUPABASE_URL=
-SUPABASE_SECRET_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 ```
 
 ## Supabase migrations
@@ -591,7 +591,7 @@ Never commit or share:
 ```text
 .env
 .env.local
-SUPABASE_SECRET_KEY
+SUPABASE_SERVICE_ROLE_KEY
 Supabase service_role keys
 Database passwords
 ```

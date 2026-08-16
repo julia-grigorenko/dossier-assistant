@@ -1,0 +1,26 @@
+services:
+  n8n:
+    image: docker.io/n8nio/n8n
+    container_name: dossier-assistant-n8n
+
+    ports:
+      - "5678:5678"
+
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+
+      - APP_BASE_URL=http://host.docker.internal:3000
+      - N8N_SHARED_SECRET=${N8N_SHARED_SECRET}
+
+      - GENERIC_TIMEZONE=Europe/Amsterdam
+      - TZ=Europe/Amsterdam
+
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+    restart: unless-stopped
+
+volumes:
+  n8n_data:
