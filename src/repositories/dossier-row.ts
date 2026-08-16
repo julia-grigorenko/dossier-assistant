@@ -58,3 +58,21 @@ export interface AnalysisUpdate {
     analysis_completed_at: string;
     processing_error: null;
 }
+
+export interface ProcessingContextRow {
+    id: string;
+    full_name: string;
+    company_name: string;
+    original_request: string;
+    status: DossierStatus;
+    processing_token: string | null;
+}
+
+export interface ProcessingContextRecord {
+    id: string;
+    fullName: string;
+    companyName: string;
+    originalRequest: string;
+    status: DossierStatus;
+    processingToken: string | null;
+}

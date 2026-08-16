@@ -10,6 +10,9 @@ import type {
 import { evaluateAnalysis } from "@/domain/dossier/evaluate-analysis";
 import { canTransitionStatus } from "@/domain/dossier/status-transitions";
 import { dossierRepository } from "@/repositories/dossier.repository";
+import type {
+    WorkflowContextData,
+} from "@/domain/dossier/workflow.types";
 
 function validationIssues(error: {
     issues: Array<{ path: PropertyKey[]; message: string }>;
@@ -48,6 +51,51 @@ export const dossierService = {
 
     async findAll(status?: DossierStatus): Promise<Dossier[]> {
         return dossierRepository.findAll(status);
+    },
+
+    async getProcessingContext(
+        id: string,
+    ): Promise<DossierResult<WorkflowContextData>> {
+        const context =
+            await dossierRepository.findProcessingContext(id);
+
+        if (!context) {
+            return {
+                ok: false,
+                error: "NOT_FOUND",
+            };
+        }
+
+        if (context.status !== "PROCESSING") {
+            return {
+                ok: false,
+                error: "VALIDATION_ERROR",
+                issues: [
+                    `Dossier context is unavailable while status is ${context.status}.`,
+                ],
+            };
+        }
+
+        if (!context.processingToken) {
+            return {
+                ok: false,
+                error: "VALIDATION_ERROR",
+                issues: [
+                    "The processing dossier does not have a processing token.",
+                ],
+            };
+        }
+
+        return {
+            ok: true,
+            data: {
+                id: context.id,
+                fullName: context.fullName,
+                companyName: context.companyName,
+                originalRequest: context.originalRequest,
+                processingToken: context.processingToken,
+            },
+        };
     },
 
     async updateAnalysis(

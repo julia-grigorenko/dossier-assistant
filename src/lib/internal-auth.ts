@@ -2,7 +2,9 @@ import "server-only";
 
 import { timingSafeEqual } from "node:crypto";
 
-import { apiError } from "./api-response";
+import { apiError, type ApiErrorBody } from "./api-response";
+
+import type { NextResponse } from "next/server";
 
 const BEARER_PATTERN = /^Bearer ([^\s]+)$/i;
 
@@ -52,7 +54,7 @@ export function hasValidInternalAuthorization(
 
 export function requireInternalAuthorization(
     request: Request,
-): Response | null {
+): NextResponse<ApiErrorBody> | null {
     if (hasValidInternalAuthorization(request)) {
         return null;
     }

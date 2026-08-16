@@ -6,14 +6,21 @@ import type {
     DossierStatus,
     ExtractedAnalysis,
 } from "@/domain/dossier/dossier.types";
+
 import { supabaseAdmin } from "@/lib/db/client";
 
 import {
     mapAnalysisUpdate,
     mapCreateInput,
     mapDossierRow,
+    mapProcessingContextRow,
 } from "./dossier.mapper";
-import type { DossierRow } from "./dossier-row";
+
+import type {
+    DossierRow,
+    ProcessingContextRecord,
+    ProcessingContextRow,
+} from "./dossier-row";
 
 const TABLE = "dossiers";
 
@@ -79,6 +86,35 @@ export const dossierRepository = {
         }
 
         return (data as DossierRow[]).map(mapDossierRow);
+    },
+
+    async findProcessingContext(
+        id: string,
+    ): Promise<ProcessingContextRecord | null> {
+        const { data, error } = await supabaseAdmin
+            .from(TABLE)
+            .select(`
+      id,
+      full_name,
+      company_name,
+      original_request,
+      status,
+      processing_token
+    `)
+            .eq("id", id)
+            .maybeSingle();
+
+        if (error) {
+            throw new Error(
+                `Failed to retrieve processing context: ${error.message}`,
+            );
+        }
+
+        return data
+            ? mapProcessingContextRow(
+                data as ProcessingContextRow,
+            )
+            : null;
     },
 
     async updateAnalysis(
@@ -154,3 +190,4 @@ export const dossierRepository = {
         return data ? mapDossierRow(data as DossierRow) : null;
     },
 };
+

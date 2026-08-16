@@ -8,6 +8,8 @@ import type {
     AnalysisUpdate,
     DossierInsert,
     DossierRow,
+    ProcessingContextRecord,
+    ProcessingContextRow,
 } from "./dossier-row";
 
 export function mapDossierRow(row: DossierRow): Dossier {
@@ -77,5 +79,18 @@ export function mapAnalysisUpdate(
         status,
         analysis_completed_at: new Date().toISOString(),
         processing_error: null,
+    };
+}
+
+export function mapProcessingContextRow(
+    row: ProcessingContextRow,
+): ProcessingContextRecord {
+    return {
+        id: row.id,
+        fullName: row.full_name,
+        companyName: row.company_name,
+        originalRequest: row.original_request,
+        status: row.status,
+        processingToken: row.processing_token,
     };
 }
