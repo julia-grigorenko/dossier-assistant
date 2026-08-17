@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import { extractedAnalysisSchema } from "./analysis.schema";
-
 export const workflowTriggerSchema = z
     .object({
         dossierId: z.string().uuid(),
