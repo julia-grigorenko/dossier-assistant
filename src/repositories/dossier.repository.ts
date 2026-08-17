@@ -10,6 +10,7 @@ import type {
 import { supabaseAdmin } from "@/lib/db/client";
 
 import {
+    mapAnalysisCallbackStateRow,
     mapAnalysisUpdate,
     mapCreateInput,
     mapDossierRow,
@@ -17,9 +18,14 @@ import {
 } from "./dossier.mapper";
 
 import type {
+    AnalysisCallbackState,
+    AnalysisCallbackStateRow,
     DossierRow,
     ProcessingContextRecord,
     ProcessingContextRow,
+    FailedAnalysisCallbackUpdate,
+    MalformedAnalysisCallbackUpdate,
+    SuccessfulAnalysisCallbackUpdate,
 } from "./dossier-row";
 
 const TABLE = "dossiers";
@@ -86,6 +92,107 @@ export const dossierRepository = {
         }
 
         return (data as DossierRow[]).map(mapDossierRow);
+    },
+
+    async findAnalysisCallbackState(
+        id: string,
+    ): Promise<AnalysisCallbackState | null> {
+        const { data, error } = await supabaseAdmin
+            .from(TABLE)
+            .select(`
+      id,
+      status,
+      processing_token
+    `)
+            .eq("id", id)
+            .maybeSingle();
+
+        if (error) {
+            throw new Error(
+                `Failed to retrieve callback state: ${error.message}`,
+            );
+        }
+
+        return data
+            ? mapAnalysisCallbackStateRow(
+                data as AnalysisCallbackStateRow,
+            )
+            : null;
+    },
+
+    async completeAnalysisSuccess(
+        id: string,
+        suppliedToken: string,
+        update: SuccessfulAnalysisCallbackUpdate,
+    ): Promise<Dossier | null> {
+        const { data, error } = await supabaseAdmin
+            .from(TABLE)
+            .update(update)
+            .eq("id", id)
+            .eq("status", "PROCESSING")
+            .eq("processing_token", suppliedToken)
+            .select("*")
+            .maybeSingle();
+
+        if (error) {
+            throw new Error(
+                `Failed to complete analysis: ${error.message}`,
+            );
+        }
+
+        return data
+            ? mapDossierRow(data as DossierRow)
+            : null;
+    },
+
+    async completeMalformedAnalysis(
+        id: string,
+        suppliedToken: string,
+        update: MalformedAnalysisCallbackUpdate,
+    ): Promise<Dossier | null> {
+        const { data, error } = await supabaseAdmin
+            .from(TABLE)
+            .update(update)
+            .eq("id", id)
+            .eq("status", "PROCESSING")
+            .eq("processing_token", suppliedToken)
+            .select("*")
+            .maybeSingle();
+
+        if (error) {
+            throw new Error(
+                `Failed to store malformed analysis result: ${error.message}`,
+            );
+        }
+
+        return data
+            ? mapDossierRow(data as DossierRow)
+            : null;
+    },
+
+    async completeAnalysisFailure(
+        id: string,
+        suppliedToken: string,
+        update: FailedAnalysisCallbackUpdate,
+    ): Promise<Dossier | null> {
+        const { data, error } = await supabaseAdmin
+            .from(TABLE)
+            .update(update)
+            .eq("id", id)
+            .eq("status", "PROCESSING")
+            .eq("processing_token", suppliedToken)
+            .select("*")
+            .maybeSingle();
+
+        if (error) {
+            throw new Error(
+                `Failed to store analysis failure: ${error.message}`,
+            );
+        }
+
+        return data
+            ? mapDossierRow(data as DossierRow)
+            : null;
     },
 
     async findProcessingContext(

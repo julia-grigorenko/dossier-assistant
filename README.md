@@ -558,6 +558,76 @@ NEEDS_REVIEW → APPROVED
 
 `APPROVED` is terminal.
 
+## Workflow callback behavior
+
+Analysis callbacks are accepted only while a dossier has an active processing attempt.
+
+The callback update is conditional on:
+
+```sql
+WHERE id = :dossier_id
+  AND status = 'PROCESSING'
+  AND processing_token = :supplied_token
+```
+
+### Callback idempotency
+
+For the current MVP, callback handling uses state-based duplicate protection:
+
+```text
+First valid callback:
+  conditional update succeeds
+  processing_token is cleared
+  → 200 OK
+
+Repeated or late callback:
+  status is no longer PROCESSING
+  or processing_token is null
+  or the supplied token no longer matches
+  → 409 INVALID_STATE
+```
+
+This prevents repeated, delayed, or competing callbacks from overwriting a completed result.
+
+The current implementation does not provide exact-retry idempotency. It cannot recognize that a repeated callback body is identical to one that was previously accepted because callback fingerprints and workflow-run records are not stored.
+
+A future production implementation could return `200 OK` for an exact retry by storing one of the following:
+
+- A workflow-run identifier
+- A callback idempotency key
+- A hash of the accepted callback payload
+- A separate workflow-run record
+
+Until that exists, repeated callbacks are rejected with `409` rather than reported as successfully reapplied.
+
+## Development mock retention
+
+The real callback service is the production replacement for the mock-analysis service. The development mock remains temporarily available until the complete n8n workflow passes both required scenarios:
+
+- Complete analysis produces `READY`
+- Incomplete or low-confidence analysis produces `NEEDS_REVIEW`
+
+The retained development-only files are:
+
+```text
+src/services/mock-analysis.service.ts
+src/app/api/dev/dossiers/[id]/analyze/route.ts
+```
+
+The mock endpoint is available only in development mode and returns `404` in production.
+
+Both the mock and real workflows reuse the application’s trusted validation and persistence logic:
+
+```text
+Analysis producer
+  → Zod validation
+  → evaluateAnalysis()
+  → conditional repository update
+  → PostgreSQL
+```
+
+The mock may be removed after the n8n workflow reliably completes both scenarios and the failure path has been verified.
+
 ## Current MVP limitations
 
 * n8n is not integrated yet.
@@ -583,6 +653,9 @@ NEEDS_REVIEW → APPROVED
 * The UI has functional MVP styling and limited accessibility testing.
 * Deployment and production connectivity are not completed.
 * Automated tests focus on domain rules and deterministic mock fixtures; full browser end-to-end tests are not included.
+* Callback idempotency is state-based; exact repeated callbacks return `409`.
+* Callback fingerprints and workflow-run records are not stored.
+* The development mock remains available until the real n8n workflow passes both required scenarios.
 
 ## Security notes
 

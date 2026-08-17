@@ -32,11 +32,12 @@ export const successCallbackSchema = z
         processingToken: z.string().uuid(),
         outcome: z.literal("success"),
 
-        // Reuse the existing authoritative analysis schema.
-        parsedOutput: extractedAnalysisSchema,
+        // The envelope accepts any JSON-compatible value.
+        // The callback service validates this separately with
+        // extractedAnalysisSchema.
+        parsedOutput: z.unknown(),
 
-        // Keep the provider output for diagnostics.
-        rawOutput: z.string(),
+        rawOutput: z.string().max(100_000),
     })
     .strict();
 

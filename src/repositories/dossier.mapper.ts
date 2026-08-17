@@ -5,6 +5,8 @@ import type {
 } from "@/domain/dossier/dossier.types";
 
 import type {
+    AnalysisCallbackState,
+    AnalysisCallbackStateRow,
     AnalysisUpdate,
     DossierInsert,
     DossierRow,
@@ -90,6 +92,16 @@ export function mapProcessingContextRow(
         fullName: row.full_name,
         companyName: row.company_name,
         originalRequest: row.original_request,
+        status: row.status,
+        processingToken: row.processing_token,
+    };
+}
+
+export function mapAnalysisCallbackStateRow(
+    row: AnalysisCallbackStateRow,
+): AnalysisCallbackState {
+    return {
+        id: row.id,
         status: row.status,
         processingToken: row.processing_token,
     };

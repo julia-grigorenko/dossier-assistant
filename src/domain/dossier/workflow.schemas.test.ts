@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+    extractedAnalysisSchema,
+} from "./analysis.schema";
+
+import {
     failureCallbackSchema,
     successCallbackSchema,
     workflowCallbackSchema,
@@ -109,8 +113,8 @@ describe("n8n workflow contracts", () => {
         expect(result.success).toBe(false);
     });
 
-    it("rejects extra analysis fields", () => {
-        const result = workflowCallbackSchema.safeParse({
+    it("allows the envelope but rejects extra analysis fields", () => {
+        const envelope = workflowCallbackSchema.safeParse({
             processingToken,
             outcome: "success",
             parsedOutput: {
@@ -120,25 +124,55 @@ describe("n8n workflow contracts", () => {
             rawOutput: "{}",
         });
 
-        expect(result.success).toBe(false);
+        // The callback envelope itself is valid.
+        expect(envelope.success).toBe(true);
+
+        if (
+            envelope.success &&
+            envelope.data.outcome === "success"
+        ) {
+            // The nested analysis remains untrusted until it is
+            // separately validated by extractedAnalysisSchema.
+            const analysis =
+                extractedAnalysisSchema.safeParse(
+                    envelope.data.parsedOutput,
+                );
+
+            expect(analysis.success).toBe(false);
+        }
     });
 
-    it("rejects confidence above one", () => {
-        const result = workflowCallbackSchema.safeParse({
+    it("allows the envelope but rejects extra analysis fields", () => {
+        const envelope = workflowCallbackSchema.safeParse({
             processingToken,
             outcome: "success",
             parsedOutput: {
                 ...validAnalysis,
-                confidence: 1.1,
+                proposedApproval: true,
             },
             rawOutput: "{}",
         });
 
-        expect(result.success).toBe(false);
+        // The callback envelope itself is valid.
+        expect(envelope.success).toBe(true);
+
+        if (
+            envelope.success &&
+            envelope.data.outcome === "success"
+        ) {
+            // The nested analysis remains untrusted until it is
+            // separately validated by extractedAnalysisSchema.
+            const analysis =
+                extractedAnalysisSchema.safeParse(
+                    envelope.data.parsedOutput,
+                );
+
+            expect(analysis.success).toBe(false);
+        }
     });
 
-    it("rejects confidence below zero", () => {
-        const result = workflowCallbackSchema.safeParse({
+    it("allows the envelope but rejects confidence below zero", () => {
+        const envelope = workflowCallbackSchema.safeParse({
             processingToken,
             outcome: "success",
             parsedOutput: {
@@ -148,6 +182,18 @@ describe("n8n workflow contracts", () => {
             rawOutput: "{}",
         });
 
-        expect(result.success).toBe(false);
+        expect(envelope.success).toBe(true);
+
+        if (
+            envelope.success &&
+            envelope.data.outcome === "success"
+        ) {
+            const analysis =
+                extractedAnalysisSchema.safeParse(
+                    envelope.data.parsedOutput,
+                );
+
+            expect(analysis.success).toBe(false);
+        }
     });
-});
+})

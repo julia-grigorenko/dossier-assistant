@@ -76,3 +76,57 @@ export interface ProcessingContextRecord {
     status: DossierStatus;
     processingToken: string | null;
 }
+
+export interface AnalysisCallbackStateRow {
+    id: string;
+    status: DossierStatus;
+    processing_token: string | null;
+}
+
+export interface AnalysisCallbackState {
+    id: string;
+    status: DossierStatus;
+    processingToken: string | null;
+}
+
+export interface SuccessfulAnalysisCallbackUpdate {
+    request_type: RequestType;
+    requested_amount: number | null;
+    annual_revenue: number | null;
+    company_age_years: number | null;
+    urgency: Urgency | null;
+    summary: string;
+    confidence: number;
+    missing_fields: string[];
+    validation_warnings: string[];
+    ai_raw_output: string;
+    processing_error: null;
+    processing_token: null;
+    analysis_completed_at: string;
+    status: "READY" | "NEEDS_REVIEW";
+}
+
+export interface MalformedAnalysisCallbackUpdate {
+    request_type: null;
+    requested_amount: null;
+    annual_revenue: null;
+    company_age_years: null;
+    urgency: null;
+    summary: null;
+    confidence: null;
+    missing_fields: string[];
+    validation_warnings: string[];
+    ai_raw_output: string;
+    processing_error: null;
+    processing_token: null;
+    analysis_completed_at: string;
+    status: "NEEDS_REVIEW";
+}
+
+export interface FailedAnalysisCallbackUpdate {
+    status: "PROCESSING_FAILED";
+    processing_error: string;
+    ai_raw_output: string | null;
+    processing_token: null;
+    analysis_completed_at: string;
+}
