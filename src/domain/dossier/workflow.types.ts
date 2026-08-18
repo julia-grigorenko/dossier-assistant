@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { Dossier } from "./dossier.types";
+
 import {
     failureCallbackSchema,
     successCallbackSchema,
@@ -32,3 +34,13 @@ export type WorkflowFailureCallback = z.infer<
 export type WorkflowCallback = z.infer<
     typeof workflowCallbackSchema
 >;
+
+export interface AnalysisJob {
+    dossierId: string;
+    processingToken: string;
+}
+
+export interface CreatedDossierJob {
+    dossier: Dossier;
+    processingToken: string;
+}

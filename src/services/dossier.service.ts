@@ -12,6 +12,7 @@ import { canTransitionStatus } from "@/domain/dossier/status-transitions";
 import { dossierRepository } from "@/repositories/dossier.repository";
 import type {
     WorkflowContextData,
+    CreatedDossierJob,
 } from "@/domain/dossier/workflow.types";
 
 function validationIssues(error: {
@@ -24,21 +25,79 @@ function validationIssues(error: {
     });
 }
 
-export const dossierService = {
-    async create(input: unknown): Promise<DossierResult<Dossier>> {
-        const parsed = createDossierSchema.safeParse(input);
+async function createDossierJob(
+    input: unknown,
+): Promise<DossierResult<CreatedDossierJob>> {
+    const parsed = createDossierSchema.safeParse(input);
 
-        if (!parsed.success) {
+    if (!parsed.success) {
+        return {
+            ok: false,
+            error: "VALIDATION_ERROR",
+            issues: validationIssues(parsed.error),
+        };
+    }
+
+    const created =
+        await dossierRepository.create(parsed.data);
+
+    return {
+        ok: true,
+        data: created,
+    };
+}
+
+export const dossierService = {
+    async create(
+        input: unknown,
+    ): Promise<DossierResult<Dossier>> {
+        const result = await createDossierJob(input);
+
+        if (!result.ok) {
+            return result;
+        }
+
+        return {
+            ok: true,
+            data: result.data.dossier,
+        };
+    },
+
+    async createForWorkflow(
+        input: unknown,
+    ): Promise<DossierResult<CreatedDossierJob>> {
+        return createDossierJob(input);
+    },
+
+    async markWorkflowTriggerFailed(
+        id: string,
+        processingToken: string,
+    ): Promise<DossierResult<Dossier>> {
+        const updated =
+            await dossierRepository.markWorkflowTriggerFailed(
+                id,
+                processingToken,
+            );
+
+        if (updated) {
             return {
-                ok: false,
-                error: "VALIDATION_ERROR",
-                issues: validationIssues(parsed.error),
+                ok: true,
+                data: updated,
             };
         }
 
-        const dossier = await dossierRepository.create(parsed.data);
+        const current =
+            await dossierRepository.findById(id);
 
-        return { ok: true, data: dossier };
+        return current
+            ? {
+                ok: true,
+                data: current,
+            }
+            : {
+                ok: false,
+                error: "NOT_FOUND",
+            };
     },
 
     async findById(id: string): Promise<DossierResult<Dossier>> {

@@ -7,6 +7,10 @@ import type {
     ExtractedAnalysis,
 } from "@/domain/dossier/dossier.types";
 
+import type {
+    CreatedDossierJob,
+} from "@/domain/dossier/workflow.types";
+
 import { supabaseAdmin } from "@/lib/db/client";
 
 import {
@@ -46,7 +50,7 @@ async function requireData<T>(
 }
 
 export const dossierRepository = {
-    async create(input: CreateDossierInput): Promise<Dossier> {
+    async create(input: CreateDossierInput): Promise<CreatedDossierJob> {
         const processingToken = crypto.randomUUID();
         const insert = mapCreateInput(input, processingToken);
 
@@ -58,7 +62,38 @@ export const dossierRepository = {
 
         const row = await requireData(data as DossierRow | null, error);
 
-        return mapDossierRow(row);
+        return {
+            dossier: mapDossierRow(row),
+            processingToken,
+        };
+    },
+
+    async markWorkflowTriggerFailed(
+        id: string,
+        suppliedToken: string,
+    ): Promise<Dossier | null> {
+        const { data, error } = await supabaseAdmin
+            .from(TABLE)
+            .update({
+                status: "PROCESSING_FAILED",
+                processing_error: "WORKFLOW_TRIGGER_FAILED",
+                processing_token: null,
+            })
+            .eq("id", id)
+            .eq("status", "PROCESSING")
+            .eq("processing_token", suppliedToken)
+            .select("*")
+            .maybeSingle();
+
+        if (error) {
+            throw new Error(
+                `Failed to record workflow trigger failure: ${error.message}`,
+            );
+        }
+
+        return data
+            ? mapDossierRow(data as DossierRow)
+            : null;
     },
 
     async findById(id: string): Promise<Dossier | null> {

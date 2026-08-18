@@ -5,6 +5,9 @@ import {
     type ApiErrorBody,
 } from "@/lib/api-response";
 import { dossierService } from "@/services/dossier.service";
+import {
+    dossierWorkflowService,
+} from "@/services/dossier-workflow.service";
 import { NextRequest, NextResponse } from "next/server";
 
 interface DossierResponse {
@@ -52,7 +55,10 @@ export async function POST(
     }
 
     try {
-        const result = await dossierService.create(body);
+        const result =
+            await dossierWorkflowService.createAndTrigger(
+                body,
+            );
 
         if (!result.ok) {
             if (result.error === "VALIDATION_ERROR") {
